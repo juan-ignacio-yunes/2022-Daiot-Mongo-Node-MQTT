@@ -1,2 +1,5 @@
 /node_modules
 .env
+ca.crt
+client.crt
+client.key

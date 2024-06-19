@@ -13,8 +13,8 @@ var options = {
     clean: true
 }
 
-//const URI = `mqtt://${MQTT_ENV.HOST}`; // Para utilizar sin TLS
-const URI = `mqtts://${MQTT_ENV.HOST}`; // Utiliza "mqtts" en lugar de "mqtt" para la conexión segura
+const URI = `mqtt://${MQTT_ENV.HOST}`; // Para utilizar sin TLS
+//const URI = `mqtts://${MQTT_ENV.HOST}`; // Utiliza "mqtts" en lugar de "mqtt" para la conexión segura
 console.log("MQTT:" + URI);
 
 

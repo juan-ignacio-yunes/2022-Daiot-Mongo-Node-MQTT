@@ -14,7 +14,7 @@ const router = Router();
 // Descomentar para usar mongoDB
 require('./storage/database/mongo');
 // Descomentar para usar MySQL
-// require("./storage/database/mysql");
+//require("./storage/database/mysql");
 
 // CORS:
 var corsOptions = {
