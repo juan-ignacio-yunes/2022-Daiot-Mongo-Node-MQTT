@@ -4,19 +4,8 @@ const fs = require('fs');
 
 const MQTT_ENV = config.services.MQTT;
 
-/*var options = {
-    clientId: 'mqttjs_' + Math.random().toString(16).slice(2, 8),
-    rejectUnauthorized: false,
-    username: MQTT_ENV.USERNAME,
-    password: MQTT_ENV.PASSWORD,
-    qos: 2,
-    port: MQTT_ENV.PORT,
-    clean: true
-}*/
-
 var options = {
     clientId: 'mqttjs_' + Math.random().toString(16).slice(2, 8),
-    //rejectUnauthorized: true,
     rejectUnauthorized: false,// agregado para trabajar con certificados
     username: MQTT_ENV.USERNAME,
     password: MQTT_ENV.PASSWORD,
