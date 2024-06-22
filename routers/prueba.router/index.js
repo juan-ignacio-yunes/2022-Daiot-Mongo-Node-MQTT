@@ -1,6 +1,7 @@
 const dispositivo = require("./models/dispositivos");
 const logs = require("./models/logs");
 const clientMqtt = require("../../storage/mqtt");
+const moment = require('moment-timezone');
 const options = clientMqtt.MQTTOptions;
 var arrayTopicsListen = ["/daiot"];
 var arrayTopicsServer = ["/daiot"];    
@@ -63,6 +64,8 @@ clientMqtt.on("connect", async function () {
             return;
         }
 
+        // Obtener el timestamp formateado
+        const ts = moment().tz("America/Argentina/Buenos_Aires").format("YYYY-MM-DD HH:mm:ss") + " (GMT-3)";
 
         // busco coincidencia de topic y nombre de dispositivo en la DB
         const buscarDispositivo = await dispositivo.findOne({
@@ -80,7 +83,7 @@ clientMqtt.on("connect", async function () {
             //console.log("[LOG] id: " + id);
             const elLog = new logs({
                 logId: (await logs.countDocuments()) + 1, //(id?.find(x => x?.logId)?.logId) || 0 + 1,
-                ts: new Date().getTime(),
+                ts: ts,//new Date().getTime(),
                 etemperatura: jason.temperatura,
                 ehumedad: jason.humedad,
                 nodoId: buscarDispositivo.dispositivoId,
@@ -140,7 +143,7 @@ clientMqtt.on("connect", async function () {
             //console.log("[LOG] id: " + id);
             const elLog = new logs({
                 logId: (await logs.countDocuments()) + 1,//(id?.find(x => x?.logId)?.logId) || 0 + 1,
-                ts: new Date().getTime(),
+                ts: ts, //new Date().getTime(),
                 etemperatura: jason.temperatura,
                 ehumedad: jason.humedad,
                 nodoId: elnodo

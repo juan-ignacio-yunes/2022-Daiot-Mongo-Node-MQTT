@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const moment = require('moment-timezone');
 
 const logsSchema = mongoose.Schema({
     logId: {
@@ -6,9 +7,9 @@ const logsSchema = mongoose.Schema({
         require: true
     },
     ts: {
-        type: Number,
+        type: String,
         require: true,
-        default: new Date().getTime()
+        default: () => moment().tz("America/Argentina/Buenos_Aires").format("YYYY-MM-DD HH:mm:ss (GMT-3)")//new Date().getTime()
     },
     etemperatura: {
         type: Number,
