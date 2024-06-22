@@ -17,6 +17,7 @@
     "express-promise-router": "^4.1.1",
     "glob": "^8.0.3",
     "helmet": "^5.1.0",
+    "moment-timezone": "^0.5.45",
     "mongoose": "^6.3.4",
     "mqtt": "^4.3.7",
     "mysql": "^2.18.1",
