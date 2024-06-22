@@ -9,21 +9,6 @@ const dispositivoSchema = mongoose.Schema({
         type: String,
         require: true
     },
-    ubicacion: {
-        type: String
-    },
-    luz1: {
-        type: Number,
-    },
-    luz2: {
-        type: Number,
-    },
-    temperatura: {
-        type: Number,
-    },
-    humedad: {
-        type: Number,
-    },
     topic: {
         type: String,
         require: true
@@ -31,6 +16,15 @@ const dispositivoSchema = mongoose.Schema({
     topicSrvResponse: {
         type: String,
         require: true
+    },
+    ubicacion: {
+        type: String
+    },
+    temperatura: {
+        type: Number,
+    },
+    humedad: {
+        type: Number,
     }
 });
 

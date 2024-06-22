@@ -10,12 +10,6 @@ const logsSchema = mongoose.Schema({
         require: true,
         default: new Date().getTime()
     },
-    eluz1: {
-        type: Number,
-    },
-    eluz2: {
-        type: Number,
-    },
     etemperatura: {
         type: Number,
     },

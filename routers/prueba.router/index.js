@@ -2,8 +2,8 @@ const dispositivo = require("./models/dispositivos");
 const logs = require("./models/logs");
 const clientMqtt = require("../../storage/mqtt");
 const options = clientMqtt.MQTTOptions;
-var arrayTopicsListen = ["/#"];
-var arrayTopicsServer = ["/test_node/"];
+var arrayTopicsListen = ["/daiot"];
+var arrayTopicsServer = ["/daiot"];    
 
 clientMqtt.on("connect", async function () {
     //BUSCO TODOS LOS NODOS NO REPETIDOS
@@ -20,7 +20,7 @@ clientMqtt.on("connect", async function () {
         console.log(arrayTopicsListen);
     });
     //console.log(arrayTopicsServer);
-    for (var elemento in arrayTopicsServer) {
+    /*for (var elemento in arrayTopicsServer) {
         //console.log("MQTT: " + elemento);
         const mensaje = {
             dispositivoId: elemento,
@@ -28,8 +28,6 @@ clientMqtt.on("connect", async function () {
             ubicacion: "Terraza",
             logId: 1,
             ts: new Date().getTime(),
-            luz1: 0,
-            luz2: 0,
             temperatura: 16,
             humedad: 80,
             nodoId: 0,
@@ -41,7 +39,7 @@ clientMqtt.on("connect", async function () {
                 console.log(error);
             }
         })
-    }
+    }*/
     clientMqtt.on("message", async (topic, payload) => {
         console.log("[MQTT] Mensaje recibido: " + topic + ": " + payload.toString());
         var mensaje = payload.toString();
@@ -49,18 +47,18 @@ clientMqtt.on("connect", async function () {
         try {
             jason = JSON.parse(mensaje);
         } catch (error) {
-            console.log("FORMATO INCORRECTO, DEBE ENVIAR MENSAJES EN FORMATO JSON");
+            console.log("FORMATO INCORRECTO, DEBE ENVIAR MENSAJES EN FORMATO JSON", error);
             return; // Salir de la función en caso de error de formato
         }
         // Verificar la existencia de todos los campos
-        const camposEsperados = ['luz1', 'luz2', 'temperatura', 'humedad', 'dispositivoId', 'nombre', 'ubicacion'];
+        const camposEsperados = ['temperatura', 'humedad', 'dispositivoId', 'nombre', 'ubicacion'];
         const camposFaltantes = camposEsperados.filter((campo) => !(campo in jason));
         if (camposFaltantes.length > 0) {
             console.log('CAMPOS FALTANTES: ', camposFaltantes.join(', '));
             return;
         }
         // Validar el formato del JSON
-        if (typeof jason.luz1 !== 'number' || typeof jason.luz2 !== 'number' || typeof jason.temperatura !== 'number' || typeof jason.humedad !== 'number' || typeof jason.dispositivoId !== 'number' || typeof jason.nombre !== 'string' || typeof jason.ubicacion !== 'string') {
+        if (typeof jason.temperatura !== 'number' || typeof jason.humedad !== 'number' || typeof jason.dispositivoId !== 'number' || typeof jason.nombre !== 'string' || typeof jason.ubicacion !== 'string') {
             console.log('FORMATO INCORRECTO');
             return;
         }
@@ -69,39 +67,43 @@ clientMqtt.on("connect", async function () {
         // busco coincidencia de topic y nombre de dispositivo en la DB
         const buscarDispositivo = await dispositivo.findOne({
             topic: topic,
+            dispositivoId: jason.dispositivoId,
             nombre: jason.nombre,
+            ubicacion: jason.ubicacion
         });
 
         if (buscarDispositivo) { // Si el dispositivo existe agrego un log
-            var eltime = new Date().getTime();
-            var elnodo = buscarDispositivo.dispositivoId;
-            //console.log("[LOG] Nodo: " + elnodo);
-            const id = await logs.find().sort({ "logId": -1 }).limit(1); // para obtener el maximo
-            console.log("[LOG] id: " + id);
+            //var eltime = new Date().getTime();
+            var elnodo = buscarDispositivo._id;//buscarDispositivo.dispositivoId;
+            console.log("[LOG] Nodo: " + elnodo);
+            //const id = await logs.find().sort({ "logId": -1 }).limit(1); // para obtener el maximo
+            //console.log("[LOG] id: " + id);
             const elLog = new logs({
-                logId: (id?.find(x => x?.logId)?.logId) || 0 + 1,
-                ts: eltime,
-                eluz1: jason.luz1,
-                eluz2: jason.luz2,
+                logId: (await logs.countDocuments()) + 1, //(id?.find(x => x?.logId)?.logId) || 0 + 1,
+                ts: new Date().getTime(),
                 etemperatura: jason.temperatura,
                 ehumedad: jason.humedad,
-                nodoId: elnodo
+                nodoId: buscarDispositivo.dispositivoId,
+                topic: topic,
+                topicSrvResponse: topic
             });
-            //console.log(elLog);
+            console.log(elLog);
             try {
                 const savedLog = await elLog.save();
                 console.log("REGISTRO DE LOG AGREGADO CORRECTAMENTE.");
             } catch (error) {
-                console.log("ERROR UPDATING");
+                console.log("ERROR UPDATING", error);
             }
             //ACTUALIZO Dispositivo EN MONGO
-            await dispositivo.findOneAndUpdate(
-                { dispositivoId: elnodo },
+            await dispositivo.findByIdAndUpdate(
+                elnodo,
                 {
-                    luz1: jason.luz1,
-                    luz2: jason.luz2,
+                    nombre: jason.nombre,
+                    ubicacion: jason.ubicacion,
                     temperatura: jason.temperatura,
-                    humedad: jason.humedad
+                    humedad: jason.humedad,
+                    topic: topic,
+                    topicSrvResponse: topic
                 }).then(book => {
                     console.log("DISPOSITIVO ACTUALIZADO.");
                 }).catch(err => {
@@ -117,32 +119,28 @@ clientMqtt.on("connect", async function () {
                 dispositivoId: jason.dispositivoId,
                 nombre: jason.nombre,
                 ubicacion: jason.ubicacion,
-                luz1: jason.luz1,
-                luz2: jason.luz2,
                 temperatura: jason.temperatura,
                 humedad: jason.humedad,
                 topic: topic,
                 topicSrvResponse: topic
             });
-            //console.log("NEWDISP: " + nuevodisp);
-            //console.log("Dispositivo nuevo creado ok");
+            console.log("NEWDISP: " + nuevodisp);
+            console.log("Dispositivo nuevo creado ok");
             try {
                 const savedDisp = await nuevodisp.save();
                 console.log("NUEVO NODO AGREGADO CORRECTAMENTE.");
             } catch (error) {
-                console.log("ERROR UPDATING");
+                console.log("ERROR UPDATING", error);
             }
             // Agrego el log del nodo creado
-            var eltime = new Date().getTime();
+            //var eltime = new Date().getTime();
             var elnodo = jason.dispositivoId;
             //console.log("[LOG] Nodo: " + elnodo);
-            const id = await logs.find().sort({ "logId": -1 }).limit(1); // para obtener el maximo
-            console.log("[LOG] id: " + id);
+            //const id = await logs.find().sort({ "logId": -1 }).limit(1); // para obtener el maximo
+            //console.log("[LOG] id: " + id);
             const elLog = new logs({
-                logId: (id?.find(x => x?.logId)?.logId) || 0 + 1,
-                ts: eltime,
-                eluz1: jason.luz1,
-                eluz2: jason.luz2,
+                logId: (await logs.countDocuments()) + 1,//(id?.find(x => x?.logId)?.logId) || 0 + 1,
+                ts: new Date().getTime(),
                 etemperatura: jason.temperatura,
                 ehumedad: jason.humedad,
                 nodoId: elnodo
@@ -152,7 +150,7 @@ clientMqtt.on("connect", async function () {
                 const savedLog = await elLog.save();
                 console.log("REGISTRO DE LOG AGREGADO CORRECTAMENTE.");
             } catch (error) {
-                console.log("ERROR UPDATING");
+                console.log("ERROR UPDATING", error);
             }
         }
     })
@@ -170,6 +168,20 @@ const register = (router) => {
 
     router.get('/dispositivos/:id', async function (req, res) {
         const listado = await dispositivo.findOne({ "_id": req.params.id });
+        if (!listado) return res.json({ data: null, error: 'No hay datos en la Base de Datos.' });
+        if (listado) return res.json({ data: listado, error: null });
+    });
+
+    router.get('/logs', async function (req, res) {
+        const listado = await logs.find();//.sort({ ts: -1 });
+        if (!listado) return res.json({ data: null, error: 'No hay datos en la Base de Datos.' });
+        if (listado) return res.json({ data: listado, error: null });
+    });
+
+    router.get('/logs/:nodoId', async function (req, res) {
+       
+        const listado = await logs.find({ "nodoId": req.params.nodoId }).sort({ ts: -1 });
+       // console.log(listado);
         if (!listado) return res.json({ data: null, error: 'No hay datos en la Base de Datos.' });
         if (listado) return res.json({ data: listado, error: null });
     });
